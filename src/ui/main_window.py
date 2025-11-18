@@ -1013,6 +1013,15 @@ class InteractiveLabel(QWidget):
             set_align_left_action.setChecked(current_align == "left")
             set_align_center_action.setChecked(current_align == "center")
             set_align_right_action.setChecked(current_align == "right")
+            menu.addSeparator()
+            shape_menu = menu.addMenu("文本形状 (&S)")
+            set_box_shape_action = shape_menu.addAction("方框式")
+            set_bubble_shape_action = shape_menu.addAction("气泡式")
+            current_shape = getattr(self.selected_block, "shape_type", "box")
+            set_box_shape_action.setCheckable(True)
+            set_bubble_shape_action.setCheckable(True)
+            set_box_shape_action.setChecked(current_shape == "box")
+            set_bubble_shape_action.setChecked(current_shape == "bubble")
             action = menu.exec(event.globalPos())
             if action == edit_action:
                 fake_mouse_event = QMouseEvent(
@@ -1063,6 +1072,19 @@ class InteractiveLabel(QWidget):
                     new_align = "right"
                 if self.selected_block.text_align != new_align:
                     self.selected_block.text_align = new_align
+                    self._invalidate_block_cache(self.selected_block)
+                    self.block_modified_signal.emit(self.selected_block)
+            elif (
+                action in [set_box_shape_action, set_bubble_shape_action]
+                and self.selected_block
+            ):
+                new_shape = getattr(self.selected_block, "shape_type", "box")
+                if action == set_box_shape_action:
+                    new_shape = "box"
+                elif action == set_bubble_shape_action:
+                    new_shape = "bubble"
+                if getattr(self.selected_block, "shape_type", "box") != new_shape:
+                    self.selected_block.shape_type = new_shape
                     self._invalidate_block_cache(self.selected_block)
                     self.block_modified_signal.emit(self.selected_block)
         else:
@@ -1119,6 +1141,7 @@ class InteractiveLabel(QWidget):
         new_block.outline_color = None
         new_block.background_color = None
         new_block.outline_thickness = None
+        new_block.shape_type = "box"
         self.processed_blocks.append(new_block)
         self._invalidate_block_cache(new_block)
         self.set_selected_block(new_block)
@@ -1166,6 +1189,8 @@ class TranslationWorker(QThread):
                         block.background_color = None
                     if not hasattr(block, "outline_thickness"):
                         block.outline_thickness = None
+                    if not hasattr(block, "shape_type"):
+                        block.shape_type = "box"
                 self.finished_signal.emit(
                     original_img,
                     blocks,
@@ -1261,6 +1286,8 @@ class BatchTranslationWorker(QThread):
                         block.background_color = None
                     if not hasattr(block, "outline_thickness"):
                         block.outline_thickness = None
+                    if not hasattr(block, "shape_type"):
+                        block.shape_type = "box"
                 final_drawn_pil_image = draw_processed_blocks_pil(
                     original_pil, blocks, self.config_manager
                 )

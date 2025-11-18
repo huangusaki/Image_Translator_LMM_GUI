@@ -373,11 +373,18 @@ def _render_single_block_pil_for_preview(
                     and len(text_bg_color_pil) == 4
                     and text_bg_color_pil[3] > 0
                 ):
+                    shape_type = getattr(block, "shape_type", "box")
                     draw = ImageDraw.Draw(empty_surface)
-                    draw.rectangle(
-                        [(0, 0), (bbox_width - 1, bbox_height - 1)],
-                        fill=text_bg_color_pil,
-                    )
+                    if shape_type == "bubble":
+                        draw.ellipse(
+                            [(0, 0), (bbox_width - 1, bbox_height - 1)],
+                            fill=text_bg_color_pil,
+                        )
+                    else:
+                        draw.rectangle(
+                            [(0, 0), (bbox_width - 1, bbox_height - 1)],
+                            fill=text_bg_color_pil,
+                        )
                 return empty_surface
         return None
     font_size_to_use = int(block.font_size_pixels)
@@ -417,6 +424,25 @@ def _render_single_block_pil_for_preview(
         return err_img_bbox
     max_content_width_for_wrapping = max(1, target_surface_width - (2 * text_padding))
     max_content_height_for_wrapping = max(1, target_surface_height - (2 * text_padding))
+    
+    # For bubble (ellipse) shapes, reduce available space to prevent text overflow at edges
+    # A rectangle inscribed in an ellipse has max area when sides are sqrt(2) smaller than axes
+    # Factor 0.707 is the theoretical limit, using 0.75 as a practical compromise for visual balance
+    # (Text doesn't usually fill the very corners of the wrapping box)
+    shape_type = getattr(block, "shape_type", "box")
+    bubble_offset_x = 0
+    bubble_offset_y = 0
+    if shape_type == "bubble":
+        original_w = max_content_width_for_wrapping
+        original_h = max_content_height_for_wrapping
+        # Use 0.75 to keep it reasonably large but safe enough for most text
+        scale_factor = 0.75
+        max_content_width_for_wrapping = int(original_w * scale_factor)
+        max_content_height_for_wrapping = int(original_h * scale_factor)
+        # Calculate offset to keep the reduced box centered
+        bubble_offset_x = (original_w - max_content_width_for_wrapping) / 2.0
+        bubble_offset_y = (original_h - max_content_height_for_wrapping) / 2.0
+    
     wrapped_segments: list[str]
     actual_text_render_width_unpadded: int
     actual_text_render_height_unpadded: int
@@ -496,22 +522,39 @@ def _render_single_block_pil_for_preview(
             and len(text_bg_color_pil) == 4
             and text_bg_color_pil[3] > 0
         ):
-            ImageDraw.Draw(empty_surface_fallback).rectangle(
-                [(0, 0), (target_surface_width - 1, target_surface_height - 1)],
-                fill=text_bg_color_pil,
-            )
+            shape_type = getattr(block, "shape_type", "box")
+            draw_fallback = ImageDraw.Draw(empty_surface_fallback)
+            if shape_type == "bubble":
+                draw_fallback.ellipse(
+                    [(0, 0), (target_surface_width - 1, target_surface_height - 1)],
+                    fill=text_bg_color_pil,
+                )
+            else:
+                draw_fallback.rectangle(
+                    [(0, 0), (target_surface_width - 1, target_surface_height - 1)],
+                    fill=text_bg_color_pil,
+                )
         return empty_surface_fallback
     block_surface = Image.new(
         "RGBA", (target_surface_width, target_surface_height), (0, 0, 0, 0)
     )
     draw_on_block_surface = ImageDraw.Draw(block_surface)
     if text_bg_color_pil and len(text_bg_color_pil) == 4 and text_bg_color_pil[3] > 0:
-        draw_on_block_surface.rectangle(
-            [(0, 0), (target_surface_width - 1, target_surface_height - 1)],
-            fill=text_bg_color_pil,
-        )
-    content_area_x_start = text_padding
-    content_area_y_start = text_padding
+        shape_type = getattr(block, "shape_type", "box")
+        if shape_type == "bubble":
+            # Draw ellipse background for bubble style
+            draw_on_block_surface.ellipse(
+                [(0, 0), (target_surface_width - 1, target_surface_height - 1)],
+                fill=text_bg_color_pil,
+            )
+        else:
+            # Draw rectangle background for box style (default)
+            draw_on_block_surface.rectangle(
+                [(0, 0), (target_surface_width - 1, target_surface_height - 1)],
+                fill=text_bg_color_pil,
+            )
+    content_area_x_start = text_padding + bubble_offset_x
+    content_area_y_start = text_padding + bubble_offset_y
     text_block_overall_start_x = content_area_x_start
     text_block_overall_start_y = content_area_y_start
     if block.orientation == "horizontal":
