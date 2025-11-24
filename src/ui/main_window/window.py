@@ -342,6 +342,9 @@ class MainWindow(QMainWindow):
         self.background_color_button.clicked.connect(
             lambda: self.pick_color_for_block("background")
         )
+        self.text_detail_panel.translated_text_changed_externally_signal.connect(
+            self.on_text_panel_modified
+        )
 
     def load_image(self):
         file_path, _ = QFileDialog.getOpenFileName(
@@ -596,6 +599,22 @@ class MainWindow(QMainWindow):
         if self.text_detail_panel:
             self.text_detail_panel.select_block(block)
         self.update_block_controls_ui(block)
+
+    def on_text_panel_modified(self, new_text: str, block_id: str):
+        """Handle text changes from the text detail panel."""
+        if not self.interactive_translate_area.processed_blocks:
+            return
+        # Find the block with the matching ID
+        target_block = None
+        for block in self.interactive_translate_area.processed_blocks:
+            if hasattr(block, 'id') and str(block.id) == block_id:
+                target_block = block
+                break
+        if target_block:
+            target_block.translated_text = new_text
+            self.interactive_translate_area._invalidate_block_cache(target_block)
+            self.interactive_translate_area.block_modified_signal.emit(target_block)
+
 
     def update_block_controls_ui(self, block: ProcessedBlock | None):
         if not block:

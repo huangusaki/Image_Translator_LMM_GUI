@@ -17,6 +17,7 @@ from utils.font import (
 if PILLOW_AVAILABLE:
     from PIL import Image, ImageDraw, ImageFont
 from services.gemini import GeminiMultimodalProvider, GENAI_LIB_AVAILABLE
+from services.openai import OpenAIProvider
 try:
     import numpy as np
 
@@ -82,7 +83,9 @@ class ImageProcessor:
         self.last_error = None
         self.dependencies = self._check_internal_dependencies()
         self.gemini_provider = GeminiMultimodalProvider(self.config_manager)
+        self.openai_provider = OpenAIProvider(self.config_manager)
         self._apply_proxy_settings_to_env()
+        # Font size mapping (pixels)
         self.font_size_mapping = {
             "very_small": self.config_manager.getint(
                 "FontSizeMapping", "very_small", 12
@@ -97,6 +100,7 @@ class ImageProcessor:
 
     def reload_config(self):
         self.gemini_provider.reload_client()
+        self.openai_provider.reload_client()
         self._apply_proxy_settings_to_env()
         self.font_size_mapping = {
             "very_small": self.config_manager.getint(
@@ -389,25 +393,43 @@ class ImageProcessor:
                     _report_progress(8, f"警告: Numpy未安装，跳过LLM图像对比度调整。")
             except Exception as e_preprocess:
                 _report_progress(8, f"警告: LLM图像预处理失败: {e_preprocess}")
-                pil_image_for_llm = pil_image_original.copy()
-        intermediate_blocks_for_processing: list[dict] = []
-        _report_progress(10, "使用 Gemini (google-genai SDK) 进行OCR和翻译...")
         
-        gemini_results = self.gemini_provider.process_image(
-            pil_image_for_llm, 
-            progress_callback=lambda p, m: _report_progress(10 + int(p * 0.65), m),
-            cancellation_event=cancellation_event
-        )
-
-        if gemini_results is None:
-            self.last_error = self.gemini_provider.get_last_error()
-            _report_progress(75, f"错误: {self.last_error}")
+        if _check_cancelled():
             return None
+
+        # Call LLM Provider
+        ocr_provider = self.config_manager.get("API", "ocr_provider", fallback="gemini").lower()
+        intermediate_blocks_for_processing = None
         
-        intermediate_blocks_for_processing = gemini_results
+        if ocr_provider == "openai":
+            _report_progress(10, "使用 OpenAI Compatible API 进行OCR和翻译...")
+            intermediate_blocks_for_processing = self.openai_provider.process_image(
+                pil_image_for_llm, 
+                progress_callback=lambda p, m: _report_progress(10 + int(p * 0.65), m),
+                cancellation_event=cancellation_event
+            )
+            if not intermediate_blocks_for_processing and self.openai_provider.last_error:
+                self.last_error = self.openai_provider.last_error
+        else:
+            # Default to Gemini
+            _report_progress(10, "使用 Gemini (google-genai SDK) 进行OCR和翻译...")
+            intermediate_blocks_for_processing = self.gemini_provider.process_image(
+                pil_image_for_llm, 
+                progress_callback=lambda p, m: _report_progress(10 + int(p * 0.65), m),
+                cancellation_event=cancellation_event
+            )
+            if not intermediate_blocks_for_processing and self.gemini_provider.last_error:
+                self.last_error = self.gemini_provider.last_error
+
+        if intermediate_blocks_for_processing is None:
+             if not self.last_error:
+                 self.last_error = "未从 API 获取到有效的文本块。"
+             _report_progress(75, f"错误: {self.last_error}")
+             return None
+
         _report_progress(
             75,
-            f"Gemini 解析到 {len(intermediate_blocks_for_processing)} 块。",
+            f"API 解析到 {len(intermediate_blocks_for_processing)} 块。",
         )
         if _check_cancelled():
             return None

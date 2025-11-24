@@ -45,20 +45,19 @@ DEFAULT_CONFIG = {
     "GeminiAPI": {
         "api_key": "",
         "model_name": "gemini-1.5-flash-latest",
-        "gemini_base_url": "",
+
         "request_timeout": "60",
         "target_language": "Chinese",
         "source_language": "Japanese",
         "glossary_text": "",
     },
-    "GoogleAPI": {
-        "service_account_json": "",
-    },
-    "Proxy": {
-        "enabled": "False",
-        "type": "http",
-        "host": "127.0.0.1",
-        "port": "21524",
+    "OpenAIAPI": {
+        "api_key": "",
+        "base_url": "https://api.openai.com/v1",
+        "model_name": "gpt-4o",
+        "request_timeout": "60",
+        "source_language": "Japanese",
+        "target_language": "Chinese",
     },
     "LLMImagePreprocessing": {
         "enabled": "False",

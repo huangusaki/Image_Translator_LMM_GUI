@@ -38,57 +38,21 @@ class SettingsDialog(QDialog):
 
     def _init_ui(self):
         main_layout = QVBoxLayout(self)
-        self.ocr_group = QGroupBox("OCR 设置")
+        self.ocr_group = QGroupBox("LLM Provider 设置")
         ocr_layout = QVBoxLayout(self.ocr_group)
         self.ocr_group.setSizePolicy(
             QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Preferred
         )
         primary_ocr_layout = QHBoxLayout()
-        primary_ocr_label = QLabel("OCR:")
+        primary_ocr_label = QLabel("Provider:")
         self.primary_ocr_combo = QComboBox()
-        self.primary_ocr_combo.addItems(["Gemini (推荐)", "默认gemini别动，剩下的没做"])
+        self.primary_ocr_combo.addItems(["Gemini (推荐)", "OpenAI Compatible"])
         primary_ocr_layout.addWidget(primary_ocr_label)
         primary_ocr_layout.addWidget(self.primary_ocr_combo, 1)
         ocr_layout.addLayout(primary_ocr_layout)
-        self.fallback_ocr_group = QGroupBox(
-            "回退 OCR 设置 (仅当主要 OCR 非 Gemini 时生效)"
-        )
-        self.fallback_ocr_group.setSizePolicy(
-            QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Preferred
-        )
-        self.fallback_ocr_group.setVisible(False)
-        fallback_ocr_group_layout = QVBoxLayout(self.fallback_ocr_group)
-        fallback_ocr_provider_layout = QHBoxLayout()
-        fallback_ocr_provider_label = QLabel("回退 OCR Provider:")
-        self.fallback_ocr_provider_combo = QComboBox()
-        self.fallback_ocr_provider_combo.addItems(["Google Cloud Vision"])
-        fallback_ocr_provider_layout.addWidget(fallback_ocr_provider_label)
-        fallback_ocr_provider_layout.addWidget(self.fallback_ocr_provider_combo, 1)
-        fallback_ocr_group_layout.addLayout(fallback_ocr_provider_layout)
-        self.google_ocr_widget = QWidget()
-        self.google_ocr_widget.setVisible(False)
-        google_ocr_layout = QHBoxLayout(self.google_ocr_widget)
-        google_key_label = QLabel("Google 服务账号 JSON:")
-        self.google_key_edit = QLineEdit()
-        self.google_key_button = QPushButton("浏览...")
-        google_ocr_layout.addWidget(google_key_label)
-        google_ocr_layout.addWidget(self.google_key_edit, 1)
-        google_ocr_layout.addWidget(self.google_key_button)
-        fallback_ocr_group_layout.addWidget(self.google_ocr_widget)
-        ocr_layout.addWidget(self.fallback_ocr_group)
+
         main_layout.addWidget(self.ocr_group)
-        self.trans_group = QGroupBox("翻译设置")
-        trans_layout = QVBoxLayout(self.trans_group)
-        self.trans_group.setSizePolicy(
-            QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Fixed
-        )
-        primary_trans_layout = QHBoxLayout()
-        primary_trans_label = QLabel("翻译:")
-        self.primary_trans_fixed_label = QLabel("Gemini")
-        primary_trans_layout.addWidget(primary_trans_label)
-        primary_trans_layout.addWidget(self.primary_trans_fixed_label, 1)
-        trans_layout.addLayout(primary_trans_layout)
-        main_layout.addWidget(self.trans_group)
+
         self.gemini_group = QGroupBox("Gemini API 设置")
         self.gemini_group.setVisible(False)
         gemini_main_layout = QVBoxLayout(self.gemini_group)
@@ -110,18 +74,7 @@ class SettingsDialog(QDialog):
         gemini_model_layout.addWidget(gemini_model_label)
         gemini_model_layout.addWidget(self.gemini_model_edit, 1)
         gemini_main_layout.addLayout(gemini_model_layout)
-        gemini_base_url_layout = QHBoxLayout()
-        gemini_base_url_label = QLabel("Gemini Base URL:")
-        self.gemini_base_url_edit = QLineEdit()
-        self.gemini_base_url_edit.setPlaceholderText(
-            "例如: https://generativelanguage.googleapis.com/v1beta/openai/"
-        )
-        self.gemini_base_url_edit.setToolTip(
-            "如果留空，将使用官方默认的 Gemini API 地址"
-        )
-        gemini_base_url_layout.addWidget(gemini_base_url_label)
-        gemini_base_url_layout.addWidget(self.gemini_base_url_edit, 1)
-        gemini_main_layout.addLayout(gemini_base_url_layout)
+
         gemini_source_lang_layout = QHBoxLayout()
         gemini_source_lang_label = QLabel("Gemini 源语言:")
         self.gemini_source_lang_edit = QLineEdit()
@@ -147,6 +100,70 @@ class SettingsDialog(QDialog):
         gemini_timeout_layout.addWidget(gemini_timeout_label)
         gemini_timeout_layout.addWidget(self.gemini_timeout_edit, 0)
         gemini_main_layout.addLayout(gemini_timeout_layout)
+        
+        # OpenAI Group
+        self.openai_group = QGroupBox("OpenAI Compatible 设置")
+        self.openai_group.setVisible(False)
+        openai_main_layout = QVBoxLayout(self.openai_group)
+        self.openai_group.setSizePolicy(
+            QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Preferred
+        )
+        
+        openai_key_layout = QHBoxLayout()
+        openai_key_label = QLabel("API Key:")
+        self.openai_api_key_edit = QLineEdit()
+        self.openai_api_key_edit.setPlaceholderText("sk-...")
+        self.openai_api_key_edit.setEchoMode(QLineEdit.EchoMode.Password)
+        openai_key_layout.addWidget(openai_key_label)
+        openai_key_layout.addWidget(self.openai_api_key_edit, 1)
+        openai_main_layout.addLayout(openai_key_layout)
+        
+        openai_base_url_layout = QHBoxLayout()
+        openai_base_url_label = QLabel("Base URL:")
+        self.openai_base_url_edit = QLineEdit()
+        self.openai_base_url_edit.setPlaceholderText("例如: https://api.openai.com/v1")
+        openai_base_url_layout.addWidget(openai_base_url_label)
+        openai_base_url_layout.addWidget(self.openai_base_url_edit, 1)
+        openai_main_layout.addLayout(openai_base_url_layout)
+        
+        openai_model_layout = QHBoxLayout()
+        openai_model_label = QLabel("模型名称:")
+        self.openai_model_edit = QLineEdit()
+        self.openai_model_edit.setPlaceholderText("例如: gpt-4o, claude-3-5-sonnet-20240620")
+        openai_model_layout.addWidget(openai_model_label)
+        openai_model_layout.addWidget(self.openai_model_edit, 1)
+
+        openai_main_layout.addLayout(openai_model_layout)
+
+        openai_source_lang_layout = QHBoxLayout()
+        openai_source_lang_label = QLabel("源语言:")
+        self.openai_source_lang_edit = QLineEdit()
+        self.openai_source_lang_edit.setPlaceholderText(
+            "例如: Japanese, English, Korean，直接填中文（如：粤语）也行"
+        )
+        openai_source_lang_layout.addWidget(openai_source_lang_label)
+        openai_source_lang_layout.addWidget(self.openai_source_lang_edit, 1)
+        openai_main_layout.addLayout(openai_source_lang_layout)
+
+        openai_target_lang_layout = QHBoxLayout()
+        openai_target_lang_label = QLabel("目标翻译语言:")
+        self.openai_target_lang_edit = QLineEdit()
+        self.openai_target_lang_edit.setPlaceholderText(
+            "例如: Chinese, English，直接填中文（如：粤语）也行"
+        )
+        openai_target_lang_layout.addWidget(openai_target_lang_label)
+        openai_target_lang_layout.addWidget(self.openai_target_lang_edit, 1)
+        openai_main_layout.addLayout(openai_target_lang_layout)
+
+        openai_timeout_layout = QHBoxLayout()
+        openai_timeout_label = QLabel("请求超时 (秒):")
+        self.openai_timeout_edit = QLineEdit()
+        self.openai_timeout_edit.setPlaceholderText("例如: 60")
+        openai_timeout_layout.addWidget(openai_timeout_label)
+        openai_timeout_layout.addWidget(self.openai_timeout_edit, 0)
+        openai_main_layout.addLayout(openai_timeout_layout)
+        
+        main_layout.addWidget(self.openai_group)
         self.llm_preprocess_group = QGroupBox("LLM 图像预处理 (不影响翻译后的图)")
         llm_preprocess_layout = QVBoxLayout(self.llm_preprocess_group)
         self.llm_preprocess_group.setSizePolicy(
@@ -190,9 +207,9 @@ class SettingsDialog(QDialog):
         contrast_layout.addWidget(self.llm_contrast_factor_edit, 1)
         llm_preprocess_details_form_layout.addLayout(contrast_layout)
         llm_preprocess_layout.addWidget(self.llm_preprocess_details_widget)
-        gemini_main_layout.addWidget(self.llm_preprocess_group)
         main_layout.addWidget(self.gemini_group)
-        proxy_group = QGroupBox("代理设置 (如果能直连gemini就不用管了)")
+        main_layout.addWidget(self.llm_preprocess_group)
+        proxy_group = QGroupBox("代理设置")
         proxy_layout = QVBoxLayout()
         proxy_group.setSizePolicy(
             QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Fixed
@@ -237,12 +254,10 @@ class SettingsDialog(QDialog):
             "API", "ocr_provider", fallback="gemini"
         ).lower()
         self.primary_ocr_combo.setCurrentIndex(0 if ocr_provider == "gemini" else 1)
-        fallback_ocr_provider = self.config_manager.get(
-            "API", "fallback_ocr_provider", fallback="google cloud vision"
+        ocr_provider = self.config_manager.get(
+            "API", "ocr_provider", fallback="gemini"
         ).lower()
-        self.fallback_ocr_provider_combo.setCurrentIndex(
-            0 if "google" in fallback_ocr_provider else 0
-        )
+        self.primary_ocr_combo.setCurrentIndex(0 if ocr_provider == "gemini" else 1)
         self.gemini_api_key_edit.setText(
             self.config_manager.get("GeminiAPI", "api_key", fallback="")
         )
@@ -251,9 +266,7 @@ class SettingsDialog(QDialog):
                 "GeminiAPI", "model_name", fallback="gemini-1.5-flash-latest"
             )
         )
-        self.gemini_base_url_edit.setText(
-            self.config_manager.get("GeminiAPI", "gemini_base_url", fallback="")
-        )
+
         self.gemini_timeout_edit.setText(
             self.config_manager.get("GeminiAPI", "request_timeout", fallback="60")
         )
@@ -263,9 +276,26 @@ class SettingsDialog(QDialog):
         self.gemini_target_lang_edit.setText(
             self.config_manager.get("GeminiAPI", "target_language", fallback="Chinese")
         )
-        self.google_key_edit.setText(
-            self.config_manager.get("GoogleAPI", "service_account_json", fallback="")
+        
+        self.openai_api_key_edit.setText(
+            self.config_manager.get("OpenAIAPI", "api_key", fallback="")
         )
+        self.openai_base_url_edit.setText(
+            self.config_manager.get("OpenAIAPI", "base_url", fallback="https://api.openai.com/v1")
+        )
+        self.openai_model_edit.setText(
+            self.config_manager.get("OpenAIAPI", "model_name", fallback="gpt-4o")
+        )
+        self.openai_timeout_edit.setText(
+            self.config_manager.get("OpenAIAPI", "request_timeout", fallback="60")
+        )
+        self.openai_source_lang_edit.setText(
+            self.config_manager.get("OpenAIAPI", "source_language", fallback="Japanese")
+        )
+        self.openai_target_lang_edit.setText(
+            self.config_manager.get("OpenAIAPI", "target_language", fallback="Chinese")
+        )
+
         proxy_enabled = self.config_manager.getboolean(
             "Proxy", "enabled", fallback=False
         )
@@ -315,17 +345,10 @@ class SettingsDialog(QDialog):
         self.config_manager.set(
             "API",
             "ocr_provider",
-            "gemini" if self.primary_ocr_combo.currentIndex() == 0 else "fallback",
+            "gemini" if self.primary_ocr_combo.currentIndex() == 0 else "openai",
         )
-        if self.fallback_ocr_provider_combo.count() > 0:
-            self.config_manager.set(
-                "API", "fallback_ocr_provider", "google cloud vision"
-            )
-        else:
-            self.config_manager.set(
-                "API", "fallback_ocr_provider", "google cloud vision"
-            )
-        self.config_manager.set("API", "translation_provider", "gemini")
+
+
         self.config_manager.set("GeminiAPI", "api_key", self.gemini_api_key_edit.text())
         self.config_manager.set(
             "GeminiAPI",
@@ -337,9 +360,7 @@ class SettingsDialog(QDialog):
             "request_timeout",
             self.gemini_timeout_edit.text().strip() or "60",
         )
-        self.config_manager.set(
-            "GeminiAPI", "gemini_base_url", self.gemini_base_url_edit.text().strip()
-        )
+
         self.config_manager.set(
             "GeminiAPI",
             "source_language",
@@ -350,8 +371,21 @@ class SettingsDialog(QDialog):
             "target_language",
             self.gemini_target_lang_edit.text().strip() or "Chinese",
         )
+        
+        self.config_manager.set("OpenAIAPI", "api_key", self.openai_api_key_edit.text())
+        self.config_manager.set("OpenAIAPI", "base_url", self.openai_base_url_edit.text().strip())
+        self.config_manager.set("OpenAIAPI", "model_name", self.openai_model_edit.text().strip())
+        self.config_manager.set("OpenAIAPI", "request_timeout", self.openai_timeout_edit.text().strip())
+        self.config_manager.set("OpenAIAPI", "request_timeout", self.openai_timeout_edit.text().strip())
         self.config_manager.set(
-            "GoogleAPI", "service_account_json", self.google_key_edit.text()
+            "OpenAIAPI",
+            "source_language",
+            self.openai_source_lang_edit.text().strip() or "Japanese",
+        )
+        self.config_manager.set(
+            "OpenAIAPI",
+            "target_language",
+            self.openai_target_lang_edit.text().strip() or "Chinese",
         )
         self.config_manager.set(
             "Proxy", "enabled", str(self.proxy_checkbox.isChecked())
@@ -393,11 +427,7 @@ class SettingsDialog(QDialog):
         self.llm_preprocess_enabled_checkbox.stateChanged.connect(
             self._toggle_llm_preprocess_details
         )
-        self.google_key_button.clicked.connect(self._browse_google_key)
         self.primary_ocr_combo.currentIndexChanged.connect(
-            self._update_provider_sections_visibility
-        )
-        self.fallback_ocr_provider_combo.currentIndexChanged.connect(
             self._update_provider_sections_visibility
         )
 
@@ -425,43 +455,18 @@ class SettingsDialog(QDialog):
 
     def _update_provider_sections_visibility(self):
         is_gemini_ocr_primary = self.primary_ocr_combo.currentIndex() == 0
-        show_fallback_ocr_group_flag = not is_gemini_ocr_primary
-        if self.fallback_ocr_group.isVisible() != show_fallback_ocr_group_flag:
-            self.fallback_ocr_group.setVisible(show_fallback_ocr_group_flag)
-        if show_fallback_ocr_group_flag:
-            is_google_selected_for_fallback_ocr = (
-                self.fallback_ocr_provider_combo.currentIndex() == 0
-                and self.fallback_ocr_provider_combo.count() > 0
-            )
-            if (
-                self.google_ocr_widget.isVisible()
-                != is_google_selected_for_fallback_ocr
-            ):
-                self.google_ocr_widget.setVisible(is_google_selected_for_fallback_ocr)
-        else:
-            self.google_ocr_widget.setVisible(False)
-        show_gemini_api_settings_group_flag = is_gemini_ocr_primary or True
+        show_gemini_api_settings_group_flag = is_gemini_ocr_primary
         if self.gemini_group.isVisible() != show_gemini_api_settings_group_flag:
             self.gemini_group.setVisible(show_gemini_api_settings_group_flag)
+            
+        show_openai_group_flag = not is_gemini_ocr_primary
+        if self.openai_group.isVisible() != show_openai_group_flag:
+            self.openai_group.setVisible(show_openai_group_flag)
         QApplication.processEvents()
         self.layout().activate()
         self.adjustSize()
 
-    def _browse_google_key(self):
-        current_path = self.google_key_edit.text()
-        start_dir = (
-            os.path.dirname(current_path)
-            if current_path and os.path.exists(os.path.dirname(current_path))
-            else os.path.expanduser("~")
-        )
-        file_path, _ = QFileDialog.getOpenFileName(
-            self,
-            "选择 Google 服务账号 JSON 文件",
-            start_dir,
-            "JSON 文件 (*.json);;所有文件 (*)",
-        )
-        if file_path:
-            self.google_key_edit.setText(file_path)
+
 
     @pyqtSlot()
     def on_save(self):
@@ -488,6 +493,28 @@ class SettingsDialog(QDialog):
                 QMessageBox.warning(self, "输入错误", "Gemini 目标翻译语言未填写。")
                 self.gemini_target_lang_edit.setFocus()
                 return
+        else:
+             if not self.openai_api_key_edit.text().strip():
+                QMessageBox.warning(self, "输入错误", "OpenAI API Key 未填写。")
+                self.openai_api_key_edit.setFocus()
+                return
+             if not self.openai_base_url_edit.text().strip():
+                QMessageBox.warning(self, "输入错误", "OpenAI Base URL 未填写。")
+                self.openai_base_url_edit.setFocus()
+                return
+             if not self.openai_model_edit.text().strip():
+                QMessageBox.warning(self, "输入错误", "OpenAI 模型名称未填写。")
+                self.openai_model_edit.setFocus()
+
+                return
+             if not self.openai_source_lang_edit.text().strip():
+                QMessageBox.warning(self, "输入错误", "OpenAI 源语言未填写。")
+                self.openai_source_lang_edit.setFocus()
+                return
+             if not self.openai_target_lang_edit.text().strip():
+                QMessageBox.warning(self, "输入错误", "OpenAI 目标翻译语言未填写。")
+                self.openai_target_lang_edit.setFocus()
+                return
         gemini_timeout_str = self.gemini_timeout_edit.text().strip()
         if gemini_timeout_str and (
             not gemini_timeout_str.isdigit() or int(gemini_timeout_str) <= 0
@@ -495,18 +522,7 @@ class SettingsDialog(QDialog):
             QMessageBox.warning(self, "输入错误", "Gemini 请求超时必须是一个正整数。")
             self.gemini_timeout_edit.setFocus()
             return
-        gemini_base_url_str = self.gemini_base_url_edit.text().strip()
-        if gemini_base_url_str and not (
-            gemini_base_url_str.startswith("http://")
-            or gemini_base_url_str.startswith("https://")
-        ):
-            QMessageBox.warning(
-                self,
-                "输入错误",
-                "Gemini Base URL 如果填写，必须以 http:// 或 https:// 开头。",
-            )
-            self.gemini_base_url_edit.setFocus()
-            return
+
         if self.llm_preprocess_enabled_checkbox.isChecked():
             try:
                 upscale_f = float(self.llm_upscale_factor_edit.text().strip())

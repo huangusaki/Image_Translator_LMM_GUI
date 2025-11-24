@@ -14,7 +14,7 @@ from core.processor import ProcessedBlock
 
 
 class TextDetailPanel(QWidget):
-    translated_text_changed_externally_signal = pyqtSignal(str)
+    translated_text_changed_externally_signal = pyqtSignal(str, str)  # new_text, block_id
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -59,7 +59,7 @@ class TextDetailPanel(QWidget):
             if event.type() == QEvent.Type.FocusOut:
                 if self._current_block_id is not None and not self._programmatic_update:
                     new_text = self.translated_text_edit.toPlainText()
-                    self.translated_text_changed_externally_signal.emit(new_text)
+                    self.translated_text_changed_externally_signal.emit(new_text, str(self._current_block_id))
         return super().eventFilter(obj, event)
 
     def update_texts(
