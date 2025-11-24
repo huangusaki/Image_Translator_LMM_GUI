@@ -11,7 +11,7 @@ except ImportError:
     GOOGLE_VISION_AVAILABLE = False
     vision = None
     print("警告: 未安装 google-cloud-vision。Google Cloud Vision OCR 功能将不可用。")
-from utils.utils import process_ocr_results_merge_lines, PILLOW_AVAILABLE
+from utils.image import process_ocr_results_merge_lines, PILLOW_AVAILABLE
 
 if PILLOW_AVAILABLE:
     from PIL import Image

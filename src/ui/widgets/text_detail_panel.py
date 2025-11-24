@@ -10,6 +10,7 @@ from PyQt6.QtWidgets import (
 )
 from PyQt6.QtCore import pyqtSignal, Qt, QEvent
 from PyQt6.QtGui import QTextCursor
+from core.processor import ProcessedBlock
 
 
 class TextDetailPanel(QWidget):
@@ -89,3 +90,22 @@ class TextDetailPanel(QWidget):
 
     def get_current_translated_text(self) -> str:
         return self.translated_text_edit.toPlainText()
+
+    def refresh_block_display(self, block: ProcessedBlock):
+        if block:
+            self.update_texts(block.original_text, block.translated_text, block.id)
+        else:
+            self.clear_texts()
+
+    def select_block(self, block: ProcessedBlock | None):
+        if block:
+            self.update_texts(block.original_text, block.translated_text, block.id)
+        else:
+            self.clear_texts()
+
+    def set_blocks(self, blocks: list[ProcessedBlock]):
+        # This panel only shows one block at a time, so we don't need to store the list
+        pass
+
+    def clear_content(self):
+        self.clear_texts()

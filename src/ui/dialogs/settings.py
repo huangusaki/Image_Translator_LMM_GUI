@@ -634,7 +634,7 @@ if __name__ == "__main__":
         dummy_cfg_manager.set("Proxy", "port", "21524")
         cfg_manager = dummy_cfg_manager
     else:
-        from config_manager import ConfigManager as RealCM
+        from core.config import ConfigManager as RealCM
 
         cfg_manager = RealCM("config.ini")
     dialog = SettingsDialog(cfg_manager)

@@ -13,7 +13,7 @@ except ImportError:
     genai = None
     google_genai_types = None
 
-from config_manager import ConfigManager
+from core.config import ConfigManager
 from utils.prompts import get_gemini_ocr_translation_prompt
 
 class GeminiMultimodalProvider:

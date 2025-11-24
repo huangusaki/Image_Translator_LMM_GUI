@@ -5,9 +5,9 @@ import sys
 import threading
 import base64
 from io import BytesIO
-from config_manager import ConfigManager
-from utils.utils import _render_single_block_pil_for_preview
-from utils.font_utils import (
+from core.config import ConfigManager
+from utils.image import _render_single_block_pil_for_preview
+from utils.font import (
     PILLOW_AVAILABLE,
     get_pil_font,
     get_font_line_height,
@@ -16,7 +16,7 @@ from utils.font_utils import (
 
 if PILLOW_AVAILABLE:
     from PIL import Image, ImageDraw, ImageFont
-from services.gemini_multimodal_provider import GeminiMultimodalProvider, GENAI_LIB_AVAILABLE
+from services.gemini import GeminiMultimodalProvider, GENAI_LIB_AVAILABLE
 try:
     import numpy as np
 
