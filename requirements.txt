@@ -1,8 +1,17 @@
+# Image Translator Requirements
+
+# Core GUI
 PyQt6
+
+# Image Processing
 Pillow
-openai
-numpy
-google-generativeai
-google-cloud-vision
-requests
-google-api-core
+
+# LLM APIs - Google SDK (New)
+google-genai              # New Google Gen AI SDK (unified for gemini.py and translation.py)
+
+# LLM APIs - OpenAI
+openai                    # OpenAI Compatible API (optional alternative)
+
+# Utilities
+requests                  # HTTP requests (used by OpenAI provider)
+numpy                     # Image preprocessing (optional, for contrast adjustment)

@@ -4,14 +4,12 @@ import threading
 from abc import ABC, abstractmethod
 
 try:
-    import google.generativeai as genai
-    import google.api_core.exceptions
+    from google import genai
 
     GEMINI_LIB_FOR_TRANSLATION_AVAILABLE = True
 except ImportError:
     GEMINI_LIB_FOR_TRANSLATION_AVAILABLE = False
     genai = None
-    google = None
 
 
 class TranslationResult:
@@ -62,7 +60,7 @@ class GeminiTextTranslationProvider(TranslationProvider):
             "GeminiAPI", "target_language", "Chinese"
         )
         if not GEMINI_LIB_FOR_TRANSLATION_AVAILABLE:
-            self.last_error = "Gemini 库 (google-generativeai) 未安装。"
+            self.last_error = "Gemini 库 (google-genai) 未安装。"
             self.gemini_model = None
         elif self.gemini_model is None:
             self.last_error = "Gemini 模型未提供给翻译器。"
@@ -78,7 +76,7 @@ class GeminiTextTranslationProvider(TranslationProvider):
         self.last_error = None
         if not self.gemini_model:
             if not GEMINI_LIB_FOR_TRANSLATION_AVAILABLE:
-                self.last_error = "Gemini 库 (google-generativeai) 未安装。"
+                self.last_error = "Gemini 库 (google-genai) 未安装。"
             elif not self.last_error:
                 self.last_error = "Gemini 模型不可用或未配置。"
             return None
@@ -172,7 +170,7 @@ Translate the following {source_language} text into fluent and natural {effectiv
                         effective_target_language,
                     )
                 )
-            except google.api_core.exceptions.DeadlineExceeded as timeout_error:
+            except TimeoutError as timeout_error:
                 self.last_error = f"Gemini 文本翻译请求超时 (超过 {self.request_timeout} 秒): {timeout_error}"
                 results.append(
                     TranslationResult(
@@ -182,39 +180,12 @@ Translate the following {source_language} text into fluent and natural {effectiv
                         effective_target_language,
                     )
                 )
-            except google.api_core.exceptions.GoogleAPIError as api_error:
-                self.last_error = f"Gemini 文本翻译 API 调用失败: {api_error}"
-                results.append(
-                    TranslationResult(
-                        original_text,
-                        f"[Gemini API错误]",
-                        source_language,
-                        effective_target_language,
-                    )
-                )
-            except AttributeError as attr_err:
-                feedback_info = ""
-                if (
-                    "response" in locals()
-                    and hasattr(response, "prompt_feedback")
-                    and response.prompt_feedback
-                ):
-                    feedback_info = f" Reason: {response.prompt_feedback.block_reason.name if response.prompt_feedback.block_reason else 'Unknown'}"
-                self.last_error = f"无法从 Gemini 文本翻译响应获取文本 (可能被安全过滤器阻止): {attr_err}.{feedback_info}"
-                results.append(
-                    TranslationResult(
-                        original_text,
-                        f"[Gemini响应错误]",
-                        source_language,
-                        effective_target_language,
-                    )
-                )
             except Exception as e:
-                self.last_error = f"Gemini 文本翻译时发生未知错误: {e}"
+                self.last_error = f"Gemini 文本翻译时发生错误: {e}"
                 results.append(
                     TranslationResult(
                         original_text,
-                        f"[Gemini未知错误]",
+                        f"[Gemini错误]",
                         source_language,
                         effective_target_language,
                     )
