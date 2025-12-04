@@ -1,6 +1,38 @@
 def get_gemini_ocr_translation_prompt(
-    source_language: str, target_language: str, glossary_section: str
+    source_language: str,
+    target_language: str,
+    glossary_section: str,
+    config_manager=None,
 ) -> str:
+    """
+    获取用于 OCR 和翻译的 Prompt。
+    Args:
+        source_language: 源语言
+        target_language: 目标语言
+        glossary_section: 术语表内容
+        config_manager: 配置管理器，用于读取自定义 Prompt
+    Returns:
+        完整的 Prompt 字符串
+    """
+    if config_manager:
+        use_custom = config_manager.getboolean(
+            "Prompt", "use_custom_prompt", fallback=False
+        )
+        if use_custom:
+            custom_template = config_manager.get(
+                "Prompt", "custom_prompt_template", fallback=""
+            )
+            if custom_template.strip():
+                try:
+                    return custom_template.format(
+                        source_language=source_language,
+                        target_language=target_language,
+                        glossary_section=glossary_section,
+                    )
+                except KeyError as e:
+                    print(f"警告: 自定义 Prompt 模板变量错误: {e}，使用默认模板")
+                except Exception as e:
+                    print(f"警告: 自定义 Prompt 模板格式化失败: {e}，使用默认模板")
     return f"""
 <system_role>
 你是一位精通计算机视觉（Computer Vision）、OCR（光学字符识别）和多语言翻译的专家级AI助手。

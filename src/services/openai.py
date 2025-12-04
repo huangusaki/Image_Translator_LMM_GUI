@@ -71,7 +71,7 @@ IMPORTANT: When translating, strictly adhere to the following glossary (source_t
 </glossary>
 """
         prompt_text = get_gemini_ocr_translation_prompt(
-            source_language, target_language, glossary_section
+            source_language, target_language, glossary_section, self.config_manager
         )
         if cancellation_event and cancellation_event.is_set():
             return None

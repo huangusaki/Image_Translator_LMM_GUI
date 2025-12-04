@@ -67,10 +67,16 @@ class SettingsDialog(QDialog):
         gemini_main_layout.addLayout(gemini_key_layout)
         gemini_model_layout = QHBoxLayout()
         gemini_model_label = QLabel("Gemini 模型名称:")
-        self.gemini_model_edit = QLineEdit()
-        self.gemini_model_edit.setPlaceholderText("例如: gemini-1.5-flash-latest")
+        self.gemini_model_combo = QComboBox()
+        self.gemini_model_combo.setEditable(True)
+        self.gemini_model_combo.setPlaceholderText("选择或输入模型名称")
+        self.gemini_model_combo.setMinimumWidth(200)
+        self.refresh_models_button = QPushButton("🔄")
+        self.refresh_models_button.setFixedWidth(36)
+        self.refresh_models_button.setToolTip("刷新 Gemini 模型列表")
         gemini_model_layout.addWidget(gemini_model_label)
-        gemini_model_layout.addWidget(self.gemini_model_edit, 1)
+        gemini_model_layout.addWidget(self.gemini_model_combo, 1)
+        gemini_model_layout.addWidget(self.refresh_models_button)
         gemini_main_layout.addLayout(gemini_model_layout)
         gemini_source_lang_layout = QHBoxLayout()
         gemini_source_lang_label = QLabel("Gemini 源语言:")
@@ -250,11 +256,10 @@ class SettingsDialog(QDialog):
         self.gemini_api_key_edit.setText(
             self.config_manager.get("GeminiAPI", "api_key", fallback="")
         )
-        self.gemini_model_edit.setText(
-            self.config_manager.get(
-                "GeminiAPI", "model_name", fallback="gemini-1.5-flash-latest"
-            )
+        saved_model = self.config_manager.get(
+            "GeminiAPI", "model_name", fallback="gemini-1.5-flash-latest"
         )
+        self.gemini_model_combo.setCurrentText(saved_model)
         self.gemini_timeout_edit.setText(
             self.config_manager.get("GeminiAPI", "request_timeout", fallback="60")
         )
@@ -339,7 +344,7 @@ class SettingsDialog(QDialog):
         self.config_manager.set(
             "GeminiAPI",
             "model_name",
-            self.gemini_model_edit.text().strip() or "gemini-1.5-flash-latest",
+            self.gemini_model_combo.currentText().strip() or "gemini-1.5-flash-latest",
         )
         self.config_manager.set(
             "GeminiAPI",
@@ -422,6 +427,57 @@ class SettingsDialog(QDialog):
         self.primary_ocr_combo.currentIndexChanged.connect(
             self._update_provider_sections_visibility
         )
+        self.refresh_models_button.clicked.connect(self._refresh_gemini_models)
+
+    def _refresh_gemini_models(self):
+        """从 API 获取 Gemini 模型列表并更新下拉框"""
+        api_key = self.gemini_api_key_edit.text().strip()
+        if not api_key:
+            QMessageBox.warning(self, "提示", "请先填写 Gemini API Key")
+            return
+        self.refresh_models_button.setEnabled(False)
+        self.refresh_models_button.setText("...")
+        QApplication.processEvents()
+        try:
+            proxy_url = None
+            if self.proxy_checkbox.isChecked():
+                host = self.proxy_host_edit.text().strip()
+                port = self.proxy_port_edit.text().strip()
+                if host and port:
+                    proxy_url = f"http://{host}:{port}"
+            from services.gemini_models import (
+                fetch_gemini_models,
+                DEFAULT_GEMINI_MODELS,
+            )
+
+            models = fetch_gemini_models(api_key, proxy_url)
+            current_text = self.gemini_model_combo.currentText()
+            self.gemini_model_combo.clear()
+            if models:
+                self.gemini_model_combo.addItems(models)
+                if current_text:
+                    index = self.gemini_model_combo.findText(current_text)
+                    if index >= 0:
+                        self.gemini_model_combo.setCurrentIndex(index)
+                    else:
+                        self.gemini_model_combo.setCurrentText(current_text)
+                QMessageBox.information(
+                    self, "成功", f"获取到 {len(models)} 个 Gemini 模型"
+                )
+            else:
+                self.gemini_model_combo.addItems(DEFAULT_GEMINI_MODELS)
+                if current_text:
+                    self.gemini_model_combo.setCurrentText(current_text)
+                QMessageBox.warning(
+                    self,
+                    "提示",
+                    "未能从 API 获取模型列表，已加载默认模型列表。\n请检查 API Key 和网络连接。",
+                )
+        except Exception as e:
+            QMessageBox.warning(self, "错误", f"获取模型列表失败: {e}")
+        finally:
+            self.refresh_models_button.setEnabled(True)
+            self.refresh_models_button.setText("🔄")
 
     def _toggle_proxy_details(self, state):
         is_checked = False

@@ -77,6 +77,7 @@ from utils.font import find_font_path
 from ui.dialogs.glossary_settings import GlossarySettingsDialog
 from ui.dialogs.settings import SettingsDialog
 from ui.dialogs.text_style_settings import TextStyleSettingsDialog
+from ui.dialogs.prompt_settings import PromptSettingsDialog
 from ui.widgets.text_detail_panel import TextDetailPanel
 from ui.main_window.interactive_label import InteractiveLabel
 from ui.main_window.editable_text_dialog import EditableTextDialog
@@ -185,6 +186,7 @@ class MainWindow(QMainWindow):
         self.api_settings_action = QAction("&API及代理设置", self)
         self.glossary_settings_action = QAction("术语表设置(&T)", self)
         self.text_style_settings_action = QAction("文本样式设置(&Y)", self)
+        self.prompt_settings_action = QAction("Prompt 模板设置(&P)", self)
         self.change_bg_action = QAction("更换窗口背景(&G)", self)
         self.set_icon_action = QAction("设置窗口图标(&I)", self)
 
@@ -202,6 +204,7 @@ class MainWindow(QMainWindow):
         setting_menu.addAction(self.api_settings_action)
         setting_menu.addAction(self.glossary_settings_action)
         setting_menu.addAction(self.text_style_settings_action)
+        setting_menu.addAction(self.prompt_settings_action)
 
     def _create_central_widget(self):
         central_widget = QWidget()
@@ -324,6 +327,7 @@ class MainWindow(QMainWindow):
         self.api_settings_action.triggered.connect(self.open_api_settings)
         self.glossary_settings_action.triggered.connect(self.open_glossary_settings)
         self.text_style_settings_action.triggered.connect(self.open_text_style_settings)
+        self.prompt_settings_action.triggered.connect(self.open_prompt_settings)
         self.change_bg_action.triggered.connect(self.change_window_background)
         self.set_icon_action.triggered.connect(self.set_window_icon)
         self.translate_button.clicked.connect(self.start_translation)
@@ -565,6 +569,10 @@ class MainWindow(QMainWindow):
         if dialog.exec():
             if self.interactive_translate_area:
                 self.interactive_translate_area.reload_style_configs()
+
+    def open_prompt_settings(self):
+        dialog = PromptSettingsDialog(self.config_manager, self)
+        dialog.exec()
 
     def change_window_background(self):
         file_path, _ = QFileDialog.getOpenFileName(

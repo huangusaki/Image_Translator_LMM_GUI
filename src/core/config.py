@@ -76,6 +76,10 @@ DEFAULT_CONFIG = {
         "contrast_factor": "1.2",
         "upscale_resample_method": "LANCZOS",
     },
+    "Prompt": {
+        "use_custom_prompt": "False",
+        "custom_prompt_template": "",
+    },
 }
 
 
